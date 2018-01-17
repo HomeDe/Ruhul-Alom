@@ -1,0 +1,113 @@
+
+
+
+package com.data.Code;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class ReadCSV {
+	public static void main(String[] args) {
+		
+		String cvsfile ="ccds1.csv";
+	    String tvsfile ="ccds2.tsv";
+	    String resultfile="Result.txt";
+	    
+		ReadCSV readCSV = new ReadCSV();
+		Map<Integer, String> ccdMap = readCSV.getIdMap(cvsfile);
+		readCSV.getValueMap(tvsfile, ccdMap, resultfile);
+	}
+
+	private Map<Integer, String> getValueMap(String filePath, Map<Integer, String> ccdMap, String outputPath) {
+		BufferedReader br = null;
+		FileReader fr = null;
+		Map<Integer, String> valueMap = new HashMap<Integer, String>();
+		String EUCountriesString = "BE,BG,CZ,DK,DE,EE,IE,EL,ES,FR,HR,IT,CY,LV,LT,LU,HU,MT,NL,AT,PL,PT,RO,SI,SK,FI,SE,UK";
+		List<String> euCountriesList = Arrays.asList(EUCountriesString.split(","));
+		try {
+			br = new BufferedReader(new FileReader(filePath));
+			String sCurrentLine;
+			BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath, true));
+			writer.write("ID,Country,UA,F1,F2,F3" + "\n");
+			while ((sCurrentLine = br.readLine()) != null) {
+				String[] values = sCurrentLine.split("\t");
+				if (values.length == 5) {
+					int ID = Integer.parseInt(values[0]);
+					if (!euCountriesList.contains(values[1])) {
+						writer.write(ID + "," + values[1] + "," + ccdMap.get(ID) + "," + values[2] + "," + values[3]
+								+ "," + values[4] + "\n");
+					}
+					writer.flush();
+				} else if (values.length >= 2) {
+					int ID = Integer.parseInt(values[0]);
+					StringBuffer finalString = new StringBuffer();
+					if (!euCountriesList.contains(values[1])) {
+						finalString.append(ID).append(",").append(values[1] + ",").append(ccdMap.get(ID) + ",");
+						for (int j = 2; j < values.length; j++) {
+							finalString.append(values[j] + ",");
+						}
+						for (int k = values.length; k < 5; k++) {
+							finalString.append("null" + ",");
+						}
+						writer.write(finalString.toString().substring(0, finalString.toString().length() - 1) + "\n");
+						writer.flush();
+					}
+				}
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null)
+					br.close();
+				if (fr != null)
+					fr.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+		return valueMap;
+	}
+
+	public Map<Integer, String> getIdMap(String filePath) {
+		BufferedReader br = null;
+		FileReader fr = null;
+		Map<Integer, String> idMap = new HashMap<Integer, String>();
+		try {
+			br = new BufferedReader(new FileReader(filePath));
+			String sCurrentLine;
+			while ((sCurrentLine = br.readLine()) != null) {
+				String newLine = sCurrentLine.replaceAll("\"", "");
+				String[] values = newLine.split(",");
+				if (values.length > 2) {
+					String data = "";
+					for (int i = 1; i < values.length; i++) {
+						data = data + values[i] + "|";
+					}
+					idMap.put(Integer.parseInt(values[0]), data.substring(0, data.length() - 1));
+				} else {
+					idMap.put(Integer.parseInt(values[0]), values[1]);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (br != null)
+					br.close();
+				if (fr != null)
+					fr.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+		return idMap;
+	}
+}
